@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # ---------------------------------------------------
 #  SCRIPT BY : FIZXY_TOOLS
-#  REBORN v12.8 - MODIFIED AUTO-DETECT & DUAL MODE
+#  REBORN v12.8 - SPEED LAUNCH OPTIMIZED
 # ---------------------------------------------------
 
 PLACE_ID="97598239454123"
@@ -48,7 +48,7 @@ else
     exit 1
 fi
 
-sleep 2
+sleep 1
 
 panel() {
     clear
@@ -116,19 +116,19 @@ while :; do
                     chmod 444 "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
                 fi
                 
-                # JALANKAN ROBLOX (Menyesuaikan link yang dipilih di awal)
+                # JALANKAN ROBLOX
                 am start --user 0 -a android.intent.action.VIEW -d "$LINK" "$PKG" > /dev/null 2>&1
                 
-                # OOM ADJUST (ANTI-KILL)
-                sleep 10
+                # OOM ADJUST (DIPERCEPTEK)
+                sleep 2   # Cukup 2 detik biar dapet PID barunya
                 NPID=$(pidof $PKG)
                 [ -n "$NPID" ] && echo "-1000" > /proc/$NPID/oom_score_adj 2>/dev/null
                 
-                sleep 50
+                sleep 10  # Kasih jeda 10 detik aja sebelum pindah/buka akun selanjutnya
             fi
         fi
     done
     
     panel
-    sleep 20
+    sleep 5  # Refresh dashboard tiap 5 detik biar responsif info RAM-nya
 done
