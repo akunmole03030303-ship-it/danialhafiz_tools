@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # ---------------------------------------------------
 #  SCRIPT BY : FIZXY_TOOLS
-#  REBORN v12.8 - LAG BYPASS & SHARE LINK PERFECT FIX
+#  REBORN v12.9 - HYBRID JOINER & LAG BYPASS
 # ---------------------------------------------------
 
 PLACE_ID="97598239454123"
@@ -37,17 +37,21 @@ if [ -z "$USER_INPUT" ]; then
     exit 1
 fi
 
-if [ "$USER_INPUT" = "public" ]; then
-    LINK="roblox://experiences/start?placeId=$PLACE_ID"
-    echo "[+] Mode Terpilih: PUBLIC SERVER"
-# FIX REVISI: Menggunakan (share|games) tanpa / di ujungnya
-elif echo "$USER_INPUT" | grep -q -E "roblox.com/(share|games)"; then
-    LINK="$USER_INPUT"
-    echo "[+] Mode Terpilih: PRIVATE/SHARE SERVER"
-else
-    echo "[!] Input tidak valid!"
-    exit 1
-fi
+# Logika case native shell biar support link share & games
+case "$USER_INPUT" in
+    "public")
+        LINK="roblox://experiences/start?placeId=$PLACE_ID"
+        echo "[+] Mode Terpilih: PUBLIC SERVER"
+        ;;
+    *roblox.com/share*|*roblox.com/games*)
+        LINK="$USER_INPUT"
+        echo "[+] Mode Terpilih: PRIVATE/SHARE SERVER"
+        ;;
+    *)
+        echo "[!] Input tidak valid!"
+        exit 1
+        ;;
+esac
 
 # TWEAK: Turunin kecerahan layar ke 0 secara paksa biar HP gak overheat/thermal throttling
 echo "[*] Optimizing hardware temperature (Dimming Screen)..."
@@ -102,7 +106,7 @@ cc_auto() {
     fi
 }
 
-# KILL SISA PROSES
+# KILL SISA PROSES AWAL
 for PKG in $APPS; do 
     pm list packages | grep -q "$PKG" && am force-stop $PKG 2>/dev/null
 done
@@ -125,25 +129,27 @@ while :; do
                     chmod 444 "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
                 fi
                 
-                # JALANKAN ROBLOX
-                am start --user 0 -a android.intent.action.VIEW -d "$LINK" "$PKG" > /dev/null 2>&1
+                # METODE ADAPTASI SCRIPT LAMA (MONKEY + SPECIFIC INTENT TARGET)
+                # Langkah 1: Pancing bangun aplikasinya dulu
+                monkey -p $PKG -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1
+                sleep 2
                 
-                # OOM ADJUST & CPU TWEAK (DIPERCEPTEK)
-                sleep 2   # Cukup 2 detik biar dapet PID barunya
+                # Langkah 2: Tembak link server dengan flag target package (-p) yang akurat
+                am start -a android.intent.action.VIEW -d "$LINK" -p $PKG > /dev/null 2>&1
+                
+                # OOM ADJUST & CPU TWEAK (ANTI-LAG)
+                sleep 2
                 NPID=$(pidof $PKG)
                 if [ -n "$NPID" ]; then
-                    # Cegah aplikasi di-kill paksa oleh low memory killer Android
                     echo "-1000" > /proc/$NPID/oom_score_adj 2>/dev/null
-                    
-                    # TWEAK: Atur prioritas CPU ke paling rendah (19) agar menghemat daya CPU saat berjalan background
                     renice -n 19 -p $NPID > /dev/null 2>&1
                 fi
                 
-                sleep 10  # Kasih jeda 10 detik aja sebelum pindah/buka akun selanjutnya
+                sleep 10  # Jeda sebelum lanjut klon berikutnya
             fi
         fi
     done
     
     panel
-    sleep 5  # Refresh dashboard tiap 5 detik biar responsif info RAM-nya
+    sleep 5
 done
