@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # ---------------------------------------------------
 #  SCRIPT BY : FIZXY_TOOLS
-#  REBORN v12.8 - LAG BYPASS & SHARE LINK FIX
+#  REBORN v12.8 - LAG BYPASS & SHARE LINK PERFECT FIX
 # ---------------------------------------------------
 
 PLACE_ID="97598239454123"
@@ -40,8 +40,8 @@ fi
 if [ "$USER_INPUT" = "public" ]; then
     LINK="roblox://experiences/start?placeId=$PLACE_ID"
     echo "[+] Mode Terpilih: PUBLIC SERVER"
-# FIX: Menggunakan grep -E untuk mendukung link 'games' maupun 'share' terbaru
-elif echo "$USER_INPUT" | grep -q -E "roblox.com/(share|games)/"; then
+# FIX REVISI: Menggunakan (share|games) tanpa / di ujungnya
+elif echo "$USER_INPUT" | grep -q -E "roblox.com/(share|games)"; then
     LINK="$USER_INPUT"
     echo "[+] Mode Terpilih: PRIVATE/SHARE SERVER"
 else
