@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # ---------------------------------------------------
 #  SCRIPT BY : FIZXY_TOOLS
-#  REBORN v12.8 - SPEED LAUNCH OPTIMIZED
+#  REBORN v12.8 - LAG BYPASS & SPEED LAUNCH OPTIMIZED
 # ---------------------------------------------------
 
 PLACE_ID="97598239454123"
@@ -48,6 +48,10 @@ else
     exit 1
 fi
 
+# TWEAK: Turunin kecerahan layar ke 0 secara paksa biar HP gak overheat/thermal throttling
+echo "[*] Optimizing hardware temperature (Dimming Screen)..."
+settings put system screen_brightness 0 > /dev/null 2>&1
+
 sleep 1
 
 panel() {
@@ -83,10 +87,14 @@ panel() {
 cc_auto() {
     local SKRG=$(date +%s)
     if [ $SKRG -ge $EXPIRE ]; then
-        echo -e "\e[1;34m[*] Cleaning cache system...\e[0m"
+        echo -e "\e[1;34m[*] Cleaning cache & boosting RAM system...\e[0m"
         for PKG in $APPS; do
             [ -d "/data/data/$PKG/cache" ] && rm -rf /data/data/$PKG/cache/* 2>/dev/null
         done
+        
+        # TWEAK: Bersihkan RAM cache dari kernel sistem Android agar memory lega
+        echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+        
         LAST_CC=$(date +"%H:%M:%S")
         EXPIRE=$(($SKRG + 1800))
         sleep 1
@@ -119,10 +127,16 @@ while :; do
                 # JALANKAN ROBLOX
                 am start --user 0 -a android.intent.action.VIEW -d "$LINK" "$PKG" > /dev/null 2>&1
                 
-                # OOM ADJUST (DIPERCEPTEK)
+                # OOM ADJUST & CPU TWEAK (DIPERCEPTEK)
                 sleep 2   # Cukup 2 detik biar dapet PID barunya
                 NPID=$(pidof $PKG)
-                [ -n "$NPID" ] && echo "-1000" > /proc/$NPID/oom_score_adj 2>/dev/null
+                if [ -n "$NPID" ]; then
+                    # Cegah aplikasi di-kill paksa oleh low memory killer Android
+                    echo "-1000" > /proc/$NPID/oom_score_adj 2>/dev/null
+                    
+                    # TWEAK: Atur prioritas CPU ke paling rendah (19) agar menghemat daya CPU saat berjalan background
+                    renice -n 19 -p $NPID > /dev/null 2>&1
+                fi
                 
                 sleep 10  # Kasih jeda 10 detik aja sebelum pindah/buka akun selanjutnya
             fi
