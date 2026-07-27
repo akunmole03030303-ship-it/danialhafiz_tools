@@ -4,7 +4,8 @@
 #  REBORN v12.9 - HYBRID JOINER & LAG BYPASS
 # ---------------------------------------------------
 
-PLACE_ID="97598239454123"
+PLACE_ID_1="97598239454123"
+PLACE_ID_2="121864768012064"
 
 # DETEKSI OTOMATIS SEMUA PACKAGE YANG BERAWALAN com.roblox
 APPS=$(pm list packages | grep "com.roblox" | cut -d ":" -f2)
@@ -26,14 +27,38 @@ for PKG in $APPS; do
     TOTAL_APPS=$((TOTAL_APPS + 1))
 done
 
+# MENU PILIHAN MAP (PUBLIC SERVER)
+clear
+echo "======================================================="
+echo "       ROBLOX MULTI-INSTANCE AUTO JOINER"
+echo "======================================================="
+echo " Pilih Map untuk Public Server:"
+echo " 1. Grow A Garden 2"
+echo " 2. Fish It"
+echo "======================================================="
+echo -n "[?] Masukkan pilihan Map (1/2): "
+read MAP_CHOICE
+
+if [ "$MAP_CHOICE" = "1" ]; then
+    PUBLIC_PLACE_ID="$PLACE_ID_1"
+    MAP_NAME="Grow A Garden 2"
+elif [ "$MAP_CHOICE" = "2" ]; then
+    PUBLIC_PLACE_ID="$PLACE_ID_2"
+    MAP_NAME="Fish It"
+else
+    echo "[!] Pilihan Map tidak valid!"
+    exit 1
+fi
+
 # MENU PILIHAN METODE JOIN
 clear
 echo "======================================================="
 echo "       ROBLOX MULTI-INSTANCE AUTO JOINER"
 echo "======================================================="
+echo " Map Terpilih           : $MAP_NAME"
 echo " Jumlah Roblox terdeteksi : $TOTAL_APPS Aplikasi"
 echo " Silakan pilih metode join:"
-echo " 1. Join public melalui Place ID"
+echo " 1. Join public melalui Place ID ($MAP_NAME)"
 echo " 2. Join private server yang sama (1 Link untuk semua)"
 echo " 3. Join private server beda-beda tiap akun ($TOTAL_APPS Link)"
 echo "======================================================="
@@ -47,8 +72,8 @@ fi
 
 case "$MENU_CHOICE" in
     1)
-        LINK="roblox://experiences/start?placeId=$PLACE_ID"
-        echo "[+] Mode Terpilih: PUBLIC SERVER"
+        LINK="roblox://experiences/start?placeId=$PUBLIC_PLACE_ID"
+        echo "[+] Mode Terpilih: PUBLIC SERVER ($MAP_NAME)"
         ;;
     2)
         echo -n "[?] Tempel/Paste link VIP/Private Server: "
@@ -155,7 +180,7 @@ while :; do
                 
                 # TENTUKAN LINK BERDASARKAN PILIHAN MENU
                 if [ "$MENU_CHOICE" = "1" ]; then
-                    CURRENT_LINK="roblox://experiences/start?placeId=$PLACE_ID"
+                    CURRENT_LINK="roblox://experiences/start?placeId=$PUBLIC_PLACE_ID"
                 elif [ "$MENU_CHOICE" = "2" ]; then
                     CURRENT_LINK="$SHARED_LINK"
                 elif [ "$MENU_CHOICE" = "3" ]; then
