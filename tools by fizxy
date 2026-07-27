@@ -20,35 +20,63 @@ CFG="/data/data/com.termux/files/home/roblox_config"
 LAST_CC=$(date +"%H:%M:%S")
 EXPIRE=$(($(date +%s) + 1800))
 
+# HITUNG JUMLAH APLIKASI ROBLOX YANG TERDETEKSI
+TOTAL_APPS=0
+for PKG in $APPS; do
+    TOTAL_APPS=$((TOTAL_APPS + 1))
+done
+
 # MENU PILIHAN METODE JOIN
 clear
 echo "======================================================="
 echo "       ROBLOX MULTI-INSTANCE AUTO JOINER"
 echo "======================================================="
+echo " Jumlah Roblox terdeteksi : $TOTAL_APPS Aplikasi"
 echo " Silakan pilih metode join:"
-echo " -> Ketik 'public' untuk masuk ke server publik"
-echo " -> Tempel/Paste link VIP untuk masuk private server"
+echo " 1. Join public melalui Place ID"
+echo " 2. Join private server yang sama (1 Link untuk semua)"
+echo " 3. Join private server beda-beda tiap akun ($TOTAL_APPS Link)"
 echo "======================================================="
-echo -n "[?] Masukkan pilihan kalian: "
-read USER_INPUT
+echo -n "[?] Masukkan pilihan (1/2/3): "
+read MENU_CHOICE
 
-if [ -z "$USER_INPUT" ]; then
+if [ -z "$MENU_CHOICE" ]; then
     echo "[!] Input tidak boleh kosong!"
     exit 1
 fi
 
-# Logika case native shell biar support link share & games
-case "$USER_INPUT" in
-    "public")
+case "$MENU_CHOICE" in
+    1)
         LINK="roblox://experiences/start?placeId=$PLACE_ID"
         echo "[+] Mode Terpilih: PUBLIC SERVER"
         ;;
-    *roblox.com/share*|*roblox.com/games*)
-        LINK="$USER_INPUT"
-        echo "[+] Mode Terpilih: PRIVATE/SHARE SERVER"
+    2)
+        echo -n "[?] Tempel/Paste link VIP/Private Server: "
+        read SHARED_LINK
+        if [ -z "$SHARED_LINK" ]; then
+            echo "[!] Link tidak boleh kosong!"
+            exit 1
+        fi
+        echo "[+] Mode Terpilih: PRIVATE SERVER SAMA (1 LINK)"
+        ;;
+    3)
+        echo "[+] Mode Terpilih: PRIVATE SERVER BERBEDA-BEDA ($TOTAL_APPS AKUN)"
+        echo "-------------------------------------------------------"
+        i=1
+        for PKG in $APPS; do
+            echo -n "[?] Masukkan link private untuk akun ke-$i ($PKG): "
+            read LINK_INPUT
+            if [ -z "$LINK_INPUT" ]; then
+                echo "[!] Link tidak boleh kosong!"
+                exit 1
+            fi
+            eval "LINK_ACC_$i=\"\$LINK_INPUT\""
+            i=$((i + 1))
+        done
+        echo "-------------------------------------------------------"
         ;;
     *)
-        echo "[!] Input tidak valid!"
+        echo "[!] Pilihan tidak valid!"
         exit 1
         ;;
 esac
@@ -112,15 +140,27 @@ for PKG in $APPS; do
 done
 
 # MAIN LOOP
+INDEX=0
 while :; do
     cc_auto
     
+    INDEX=0
     for PKG in $APPS; do
+        INDEX=$((INDEX + 1))
         if pm list packages | grep -q "$PKG"; then
             PID=$(pidof $PKG)
 
             if [ -z "$PID" ]; then
                 echo -e "\e[1;31m[!] $PKG dead. Restarting...\e[0m"
+                
+                # TENTUKAN LINK BERDASARKAN PILIHAN MENU
+                if [ "$MENU_CHOICE" = "1" ]; then
+                    CURRENT_LINK="roblox://experiences/start?placeId=$PLACE_ID"
+                elif [ "$MENU_CHOICE" = "2" ]; then
+                    CURRENT_LINK="$SHARED_LINK"
+                elif [ "$MENU_CHOICE" = "3" ]; then
+                    eval "CURRENT_LINK=\$LINK_ACC_$INDEX"
+                fi
                 
                 # INJECT CONFIG
                 mkdir -p /data/data/$PKG/shared_prefs/
@@ -135,7 +175,7 @@ while :; do
                 sleep 2
                 
                 # Langkah 2: Tembak link server dengan flag target package (-p) yang akurat
-                am start -a android.intent.action.VIEW -d "$LINK" -p $PKG > /dev/null 2>&1
+                am start -a android.intent.action.VIEW -d "$CURRENT_LINK" -p $PKG > /dev/null 2>&1
                 
                 # OOM ADJUST & CPU TWEAK (ANTI-LAG)
                 sleep 2
