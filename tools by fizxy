@@ -72,7 +72,7 @@ fi
 
 case "$MENU_CHOICE" in
     1)
-        LINK="roblox://experiences/start?placeId=$PUBLIC_PLACE_ID"
+        LINK="https://www.roblox.com/games/start?placeId=$PUBLIC_PLACE_ID"
         echo "[+] Mode Terpilih: PUBLIC SERVER ($MAP_NAME)"
         ;;
     2)
@@ -81,8 +81,8 @@ case "$MENU_CHOICE" in
         if [ -z "$SHARED_LINK" ]; then
             echo "[!] Link tidak boleh kosong!"
             exit 1
-        echo "[+] Mode Terpilih: PRIVATE SERVER SAMA (1 LINK)"
         fi
+        echo "[+] Mode Terpilih: PRIVATE SERVER SAMA (1 LINK)"
         ;;
     3)
         echo "[+] Mode Terpilih: PRIVATE SERVER BERBEDA-BEDA ($TOTAL_APPS AKUN)"
@@ -180,7 +180,7 @@ while :; do
                 
                 # TENTUKAN LINK BERDASARKAN PILIHAN MENU
                 if [ "$MENU_CHOICE" = "1" ]; then
-                    CURRENT_LINK="roblox://experiences/start?placeId=$PUBLIC_PLACE_ID"
+                    CURRENT_LINK="https://www.roblox.com/games/start?placeId=$PUBLIC_PLACE_ID"
                 elif [ "$MENU_CHOICE" = "2" ]; then
                     CURRENT_LINK="$SHARED_LINK"
                 elif [ "$MENU_CHOICE" = "3" ]; then
@@ -194,7 +194,7 @@ while :; do
                     chmod 444 "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
                 fi
                 
-                # METODE ADAPTASI SCRIPT LAMA (MONKEY + SPECIFIC INTENT TARGET)
+                # METODE ADAFTASI SCRIPT LAMA (MONKEY + SPECIFIC INTENT TARGET)
                 # Langkah 1: Pancing bangun aplikasinya dulu
                 monkey -p $PKG -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1
                 sleep 2
