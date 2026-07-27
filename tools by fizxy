@@ -81,8 +81,8 @@ case "$MENU_CHOICE" in
         if [ -z "$SHARED_LINK" ]; then
             echo "[!] Link tidak boleh kosong!"
             exit 1
-        fi
         echo "[+] Mode Terpilih: PRIVATE SERVER SAMA (1 LINK)"
+        fi
         ;;
     3)
         echo "[+] Mode Terpilih: PRIVATE SERVER BERBEDA-BEDA ($TOTAL_APPS AKUN)"
