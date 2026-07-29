@@ -7,7 +7,6 @@
 PLACE_ID_1="97598239454123"
 PLACE_ID_2="121864768012064"
 
-# DETEKSI OTOMATIS SEMUA PACKAGE YANG BERAWALAN com.roblox
 APPS=$(pm list packages | grep "com.roblox" | cut -d ":" -f2)
 
 if [ -z "$APPS" ]; then
@@ -17,17 +16,14 @@ fi
 
 CFG="/data/data/com.termux/files/home/roblox_config"
 
-# TIMER CACHE
 LAST_CC=$(date +"%H:%M:%S")
 EXPIRE=$(($(date +%s) + 1800))
 
-# HITUNG JUMLAH APLIKASI ROBLOX YANG TERDETEKSI
 TOTAL_APPS=0
 for PKG in $APPS; do
     TOTAL_APPS=$((TOTAL_APPS + 1))
 done
 
-# MENU PILIHAN MAP (PUBLIC SERVER)
 clear
 echo "======================================================="
 echo "       ROBLOX MULTI-INSTANCE AUTO JOINER"
@@ -50,7 +46,6 @@ else
     exit 1
 fi
 
-# MENU PILIHAN METODE JOIN
 clear
 echo "======================================================="
 echo "       ROBLOX MULTI-INSTANCE AUTO JOINER"
@@ -106,7 +101,6 @@ case "$MENU_CHOICE" in
         ;;
 esac
 
-# TWEAK: Turunin kecerahan layar ke 0 secara paksa biar HP gak overheat/thermal throttling
 echo "[*] Optimizing hardware temperature (Dimming Screen)..."
 settings put system screen_brightness 0 > /dev/null 2>&1
 
@@ -141,7 +135,6 @@ panel() {
     echo -e "\e[1;36m└───────────────────────────────────────────────────┘\e[0m"
 }
 
-# AUTO REFRESH CACHE
 cc_auto() {
     local SKRG=$(date +%s)
     if [ $SKRG -ge $EXPIRE ]; then
@@ -150,7 +143,6 @@ cc_auto() {
             [ -d "/data/data/$PKG/cache" ] && rm -rf /data/data/$PKG/cache/* 2>/dev/null
         done
         
-        # TWEAK: Bersihkan RAM cache dari kernel sistem Android agar memory lega
         echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
         
         LAST_CC=$(date +"%H:%M:%S")
@@ -159,12 +151,10 @@ cc_auto() {
     fi
 }
 
-# KILL SISA PROSES AWAL
 for PKG in $APPS; do 
     pm list packages | grep -q "$PKG" && am force-stop $PKG 2>/dev/null
 done
 
-# MAIN LOOP
 INDEX=0
 while :; do
     cc_auto
@@ -178,7 +168,6 @@ while :; do
             if [ -z "$PID" ]; then
                 echo -e "\e[1;31m[!] $PKG dead. Restarting...\e[0m"
                 
-                # TENTUKAN LINK BERDASARKAN PILIHAN MENU
                 if [ "$MENU_CHOICE" = "1" ]; then
                     CURRENT_LINK="https://www.roblox.com/games/start?placeId=$PUBLIC_PLACE_ID"
                 elif [ "$MENU_CHOICE" = "2" ]; then
@@ -187,22 +176,18 @@ while :; do
                     eval "CURRENT_LINK=\$LINK_ACC_$INDEX"
                 fi
                 
-                # INJECT CONFIG
                 mkdir -p /data/data/$PKG/shared_prefs/
                 if [ -f "$CFG/${PKG}_config.xml" ]; then
                     cp -f "$CFG/${PKG}_config.xml" "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
                     chmod 444 "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
                 fi
                 
-                # METODE ADAFTASI SCRIPT LAMA (MONKEY + SPECIFIC INTENT TARGET)
-                # Langkah 1: Pancing bangun aplikasinya dulu
                 monkey -p $PKG -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1
-                sleep 2
                 
-                # Langkah 2: Tembak link server dengan flag target package (-p) yang akurat
+                sleep 15
+                
                 am start -a android.intent.action.VIEW -d "$CURRENT_LINK" -p $PKG > /dev/null 2>&1
                 
-                # OOM ADJUST & CPU TWEAK (ANTI-LAG)
                 sleep 2
                 NPID=$(pidof $PKG)
                 if [ -n "$NPID" ]; then
@@ -210,7 +195,7 @@ while :; do
                     renice -n 19 -p $NPID > /dev/null 2>&1
                 fi
                 
-                sleep 10  # Jeda sebelum lanjut klon berikutnya
+                sleep 10
             fi
         fi
     done
