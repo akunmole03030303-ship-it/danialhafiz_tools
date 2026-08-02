@@ -1,9 +1,20 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-URL="https://raw.githubusercontent.com/akunmole03030303-ship-it/danialhafiz_tools/main/roblox_secure"
+read -p "License Key: " LICENSE
 
-curl -L "$URL" -o $PREFIX/bin/roblox_secure
+HWID=$(getprop ro.serialno)
+
+API="https://shrill-waterfall-1428.daniyalrhafiz.workers.dev"
+
+HASIL=$(curl -s "$API/download?key=$LICENSE&hwid=$HWID")
+
+if echo "$HASIL" | grep -q "Invalid"; then
+    echo "License tidak valid"
+    exit
+fi
+
+echo "$HASIL" > $PREFIX/bin/roblox_secure
+
 chmod +x $PREFIX/bin/roblox_secure
 
-echo "Install berhasil."
 roblox_secure
