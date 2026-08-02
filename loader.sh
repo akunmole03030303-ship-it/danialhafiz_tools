@@ -51,25 +51,24 @@ if [ ! -s "$DB_FILE" ]; then
     exit 1
 fi
 
-# Cek dan Ambil Tanggal Expired menggunakan Python agar akurat
-EXP_DATE=$(python3 -c "
-import json
-try:
-    with open('$DB_FILE', 'r') as f:
-        data = json.load(f)
-    print(data.get('$MYKEY', 'INVALID'))
-except:
-    print('INVALID')
-")
-
+# Parsing database.json menggunakan grep & sed (Tanpa Python)
+RAW_LINE=$(grep -i "\"$MYKEY\"" "$DB_FILE")
 rm -f "$DB_FILE"
 
-if [ "$EXP_DATE" == "INVALID" ]; then
+if [ -z "$RAW_LINE" ]; then
     echo -e "${RED}${BOLD}[!] Gagal! License Key salah atau tidak terdaftar.${NC}"
     exit 1
 fi
 
-# Hitung Sisa Waktu (Epoch Time)
+# Ambil nilai tanggal dari format JSON ("KEY": "YYYY-MM-DD HH:MM:SS")
+EXP_DATE=$(echo "$RAW_LINE" | sed -E 's/.*:[[:space:]]*"([^"]+)".*/\1/')
+
+if [ -z "$EXP_DATE" ]; then
+    echo -e "${RED}${BOLD}[!] Gagal membaca tanggal kedaluwarsa dari database.${NC}"
+    exit 1
+fi
+
+# Hitung Sisa Waktu (Epoch Time) menggunakan perintah date bawaan Termux
 CURRENT_EPOCH=$(date +%s)
 EXPIRE_EPOCH=$(date -d "$EXP_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d %H:%M:%S" "$EXP_DATE" +%s 2>/dev/null)
 
