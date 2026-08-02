@@ -8,7 +8,7 @@ YELLOW="\033[1;33m"
 BOLD="\033[1m"
 NC="\033[0m" # Reset Warna
 
-# URL Raw database.json di repository kamu
+# URL Raw database.json & run.sh di repository kamu
 DB_URL="https://raw.githubusercontent.com/akunmole03030303-ship-it/danialhafiz_tools/refs/heads/main/database.json"
 RUN_URL="https://raw.githubusercontent.com/akunmole03030303-ship-it/danialhafiz_tools/refs/heads/main/run.sh"
 
@@ -17,7 +17,7 @@ echo -e "${CYAN}${BOLD}"
 echo "  ████████╗ ██████╗  ██████╗ ██╗     ███████╗"
 echo "  ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝"
 echo "     ██║   ██║   ██║██║   ██║██║     ███████╗"
-echo "     ██║   ██║   ██║██║   ██║██║     ╚════██║"
+echo "     ██║   ██║   ██║██║   ██║██║     ╚╚════██║"
 echo "     ██║   ╚██████╔╝╚██████╔╝███████╗███████║"
 echo "     ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝"
 echo "  ███████╗██╗███████╗██╗  ██╗██╗   ██╗"
@@ -41,50 +41,59 @@ fi
 echo ""
 echo -e "${YELLOW}[+] Menghubungkan ke server lisensi...${NC}"
 
-# Download database.json dari GitHub
-DB_JSON=$(curl -s "$DB_URL")
+# Download database.json ke file temporary
+DB_FILE=$(mktemp)
+curl -s "$DB_URL" -o "$DB_FILE"
 
-if [ -z "$DB_JSON" ]; then
+if [ ! -s "$DB_FILE" ]; then
     echo -e "${RED}${BOLD}[!] Gagal terhubung ke database GitHub!${NC}"
+    rm -f "$DB_FILE"
     exit 1
 fi
 
-# Cek apakah key terdaftar di database
-if ! echo "$DB_JSON" | grep -q "\"$MYKEY\""; then
+# Cek dan Ambil Tanggal Expired menggunakan Python agar akurat
+EXP_DATE=$(python3 -c "
+import json
+try:
+    with open('$DB_FILE', 'r') as f:
+        data = json.load(f)
+    print(data.get('$MYKEY', 'INVALID'))
+except:
+    print('INVALID')
+")
+
+rm -f "$DB_FILE"
+
+if [ "$EXP_DATE" == "INVALID" ]; then
     echo -e "${RED}${BOLD}[!] Gagal! License Key salah atau tidak terdaftar.${NC}"
     exit 1
 fi
 
-# Ambil HWID unik perangkat
-HWID=$(cat /etc/machine-id 2>/dev/null || uname -n)
+# Hitung Sisa Waktu (Epoch Time)
+CURRENT_EPOCH=$(date +%s)
+EXPIRE_EPOCH=$(date -d "$EXP_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d %H:%M:%S" "$EXP_DATE" +%s 2>/dev/null)
 
-# Ekstraksi Expired Date dan Active HWID
-EXPIRED_DATE=$(echo "$DB_JSON" | grep -A 3 "\"$MYKEY\"" | grep "expired" | cut -d'"' -f4)
-ACTIVE_HWID=$(echo "$DB_JSON" | grep -A 3 "\"$MYKEY\"" | grep "active_hwid" | cut -d'"' -f4)
-
-# Cek Masa Aktif
-CURRENT_DATE=$(date +%Y-%m-%d)
-if [[ "$CURRENT_DATE" > "$EXPIRED_DATE" ]]; then
-    echo -e "${RED}${BOLD}[!] Gagal! License Key sudah kedaluwarsa ($EXPIRED_DATE).${NC}"
+if [ -z "$EXPIRE_EPOCH" ]; then
+    echo -e "${RED}${BOLD}[!] Format tanggal expired di database tidak valid!${NC}"
     exit 1
 fi
 
-# Proteksi Anti-Double Device
-if [ -n "$ACTIVE_HWID" ] && [ "$ACTIVE_HWID" != "$HWID" ]; then
-    echo -e "${RED}${BOLD}[!] Akses Ditolak: Key sedang aktif di perangkat lain!${NC}"
+REMAINING=$((EXPIRE_EPOCH - CURRENT_EPOCH))
+
+if [ $REMAINING -le 0 ]; then
+    echo -e "${RED}${BOLD}[!] Gagal! License Key sudah kadaluwarsa pada ($EXP_DATE).${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}${BOLD}[+] Lisensi valid! Memulai program...${NC}"
+# Konversi sisa detik ke Hari, Jam, dan Menit
+DAYS=$((REMAINING / 86400))
+HOURS=$(((REMAINING % 86400) / 3600))
+MINUTES=$(((REMAINING % 3600) / 60))
+
+echo -e "${GREEN}${BOLD}[+] Lisensi valid!${NC}"
+echo -e "${GREEN}[+] Sisa Masa Aktif : ${DAYS} hari, ${HOURS} jam, ${MINUTES} menit.${NC}"
+echo -e "${YELLOW}[+] Memulai program...${NC}"
 sleep 1
 
-# Download script utama
-curl -s -L "$RUN_URL" -o run.sh
-
-if [ ! -f "run.sh" ] || grep -q "404: Not Found" run.sh; then
-    echo -e "${RED}${BOLD}[!] Gagal mendownload script utama (run.sh).${NC}"
-    exit 1
-fi
-
-chmod +x run.sh
-bash run.sh "$MYKEY" "$HWID"
+# Download script utama (run.sh)
+bash <(curl -s "$RUN_URL")
