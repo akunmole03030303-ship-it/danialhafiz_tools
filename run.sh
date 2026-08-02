@@ -1,72 +1,68 @@
-#!/bin/bash
-
-# --- PARAMETER DARI LOADER ---
-MYKEY="$1"
-HWID="$2"
-
-# -------------------------------------------------------------
+#!/system/bin/sh
+# ---------------------------------------------------
 #  SCRIPT BY : FIZXY_TOOLS
-# -------------------------------------------------------------
+# ---------------------------------------------------
 
-PLACES_ID_1="97598239454123"
-PLACES_ID_2="121864768012064"
+PLACE_ID_1="97598239454123"
+PLACE_ID_2="121864768012064"
 
 APPS=$(pm list packages | grep "com.roblox" | cut -d ":" -f2)
 
 if [ -z "$APPS" ]; then
-    echo -e "\033[1;31m[!] Error: Tidak ada aplikasi Roblox (com.roblox*) yang terdeteksi!\033[0m"
+    echo "[!] Error: Tidak ada aplikasi Roblox (com.roblox*) yang terdeteksi!"
     exit 1
 fi
 
 CFG="/data/data/com.termux/files/home/roblox_config"
 JOIN_CONFIG="/data/data/com.termux/files/home/.fizxy_join_config"
 
+LAST_CC=$(date +"%H:%M:%S")
+EXPIRE=$(($(date +%s) + 1800))
+
 TOTAL_APPS=0
 for PKG in $APPS; do
     TOTAL_APPS=$((TOTAL_APPS + 1))
 done
 
-# =============================================================
-SYSTEM_JOIN_SETTINGS() {
-    HAVE_EXISTING=0
+# --- SISTEM CONFIG / SESSION JOIN ---
+HAVE_EXISTING=0
+if [ -f "$JOIN_CONFIG" ]; then
+    HAVE_EXISTING=1
+fi
 
-    if [ -f "$JOIN_CONFIG" ]; then
-        HAVE_EXISTING=1
-    fi
-
-    if [ "$HAVE_EXISTING" = "1" ]; then
-        clear
-        echo "================================================="
-        echo "        SETTING JOIN FIZXY                      "
-        echo "================================================="
-        echo " 1. Gunakan data join sebelumnya?"
-        echo " 2. Buat metode join yang baru!"
-        echo "================================================="
-        printf "[?] Pilihan (1/2): "
-        read -r SESSION_CHOICE < /dev/tty
-        
-        if [ "$SESSION_CHOICE" = "1" ]; then
-            source "$JOIN_CONFIG"
-            return
-        fi
-    fi
-
+if [ "$HAVE_EXISTING" = "1" ]; then
     clear
-    echo "================================================="
-    echo "        ROBLOX REJOIN BY FIZXY                   "
-    echo "================================================="
+    echo "======================================================="
+    echo "       SETTING JOIN FIZXY"
+    echo "======================================================="
+    echo " 1. Gunakan data join sebelumnya?"
+    echo " 2. Buat metode join yang baru!"
+    echo "======================================================="
+    printf "[?] Pilihan (1/2): "
+    read -r SESSION_CHOICE < /dev/tty
+    
+    if [ "$SESSION_CHOICE" = "1" ]; then
+        source "$JOIN_CONFIG"
+    fi
+fi
+
+if [ -z "$MENU_CHOICE" ]; then
+    clear
+    echo "======================================================="
+    echo "       ROBLOX REJOIN BY FIZXY"
+    echo "======================================================="
     echo " Pilih Map:"
     echo " 1. Grow A Garden 2"
     echo " 2. Fish It"
-    echo "================================================="
+    echo "======================================================="
     printf "[?] Masukkan pilihan Map (1/2): "
     read -r MAP_CHOICE < /dev/tty
-    
+
     if [ "$MAP_CHOICE" = "1" ]; then
-        PUBLIC_PLACE_ID="$PLACES_ID_1"
+        PUBLIC_PLACE_ID="$PLACE_ID_1"
         MAP_NAME="Grow A Garden 2"
     elif [ "$MAP_CHOICE" = "2" ]; then
-        PUBLIC_PLACE_ID="$PLACES_ID_2"
+        PUBLIC_PLACE_ID="$PLACE_ID_2"
         MAP_NAME="Fish It"
     else
         echo "[!] Pilihan Map tidak valid!"
@@ -74,16 +70,16 @@ SYSTEM_JOIN_SETTINGS() {
     fi
 
     clear
-    echo "================================================="
-    echo "        ROBLOX AUTO JOINER                       "
-    echo "================================================="
+    echo "======================================================="
+    echo "       ROBLOX AUTO JOINER"
+    echo "======================================================="
     echo " Map Terpilih           : $MAP_NAME"
     echo " Jumlah Roblox terdeteksi : $TOTAL_APPS Aplikasi"
-    echo " Silahkan pilih metode join:"
+    echo " Silakan pilih metode join:"
     echo " 1. Join public server ($MAP_NAME)"
     echo " 2. Join private server yang sama (1 Link untuk semua)"
     echo " 3. Join private server beda-beda tiap akun ($TOTAL_APPS Link)"
-    echo "================================================="
+    echo "======================================================="
     printf "[?] Masukkan pilihan (1/2/3): "
     read -r MENU_CHOICE < /dev/tty
 
@@ -94,21 +90,21 @@ SYSTEM_JOIN_SETTINGS() {
 
     case "$MENU_CHOICE" in
         1)
-            MENU_CHOICE="1"
             SHARED_LINK="https://www.roblox.com/games/start?placeId=$PUBLIC_PLACE_ID"
+            echo "[+] Mode Terpilih: PUBLIC SERVER ($MAP_NAME)"
             ;;
         2)
-            MENU_CHOICE="2"
             printf "[?] Tempel Link Private Server: "
             read -r SHARED_LINK < /dev/tty
             if [ -z "$SHARED_LINK" ]; then
                 echo "[!] Link tidak boleh kosong!"
                 exit 1
             fi
+            echo "[+] Mode Terpilih: PRIVATE SERVER SAMA (1 LINK)"
             ;;
         3)
-            MENU_CHOICE="3"
-            echo "-------------------------------------------------"
+            echo "[+] Mode Terpilih: PRIVATE SERVER BERBEDA-BEDA ($TOTAL_APPS AKUN)"
+            echo "-------------------------------------------------------"
             i=1
             for PKG in $APPS; do
                 printf "[?] Masukkan link private untuk akun ke-$i ($PKG): "
@@ -117,10 +113,10 @@ SYSTEM_JOIN_SETTINGS() {
                     echo "[!] Link tidak boleh kosong!"
                     exit 1
                 fi
-                eval "LINK_ACC_$i=\"$LINK_INPUT\""
+                eval "LINK_ACC_$i=\"\$LINK_INPUT\""
                 i=$((i + 1))
             done
-            echo "-------------------------------------------------"
+            echo "-------------------------------------------------------"
             ;;
         *)
             echo "[!] Pilihan tidak valid!"
@@ -128,7 +124,7 @@ SYSTEM_JOIN_SETTINGS() {
             ;;
     esac
 
-    # Simpan Konfigurasi Baru
+    # Simpan Session Konfigurasi
     echo "MENU_CHOICE=\"$MENU_CHOICE\"" > "$JOIN_CONFIG"
     echo "SHARED_LINK=\"$SHARED_LINK\"" >> "$JOIN_CONFIG"
     j=1
@@ -139,33 +135,107 @@ SYSTEM_JOIN_SETTINGS() {
         fi
         j=$((j + 1))
     done
-}
+fi
 
-SYSTEM_JOIN_SETTINGS
-
-echo " -------------------------------------------------"
-echo "[+] Optimizing hardware temperature (Dimming Screen)..."
+echo "[*] Optimizing hardware temperature (Dimming Screen)..."
 settings put system screen_brightness 0 > /dev/null 2>&1
 
 sleep 1
-echo ""
-echo -e "\033[1;32m[+] Berhasil memuat sistem untuk Key: $MYKEY\033[0m"
 
-# --- BAGIAN EKSEKUSI / MEMBUKA ROBLOX ---
-echo "[+] Menjalankan Roblox multi-instance..."
-i=1
-for PKG in $APPS; do
-    if [ "$MENU_CHOICE" = "1" ] || [ "$MENU_CHOICE" = "2" ]; then
-        TARGET_LINK="$SHARED_LINK"
-    elif [ "$MENU_CHOICE" = "3" ]; then
-        eval "TARGET_LINK=\$LINK_ACC_$i"
-    fi
-
-    # Eksekusi membuka aplikasi Roblox dengan link tujuan
-    am start -n "$PKG/com.roblox.client.ActivityProtocolLauncher" -a android.intent.action.VIEW -d "$TARGET_LINK" > /dev/null 2>&1
+panel() {
+    clear
+    local RAM=$(free -m | awk '/Mem:/ { print $3 "/" $2 "MB" }')
+    local JAM=$(date +"%H:%M:%S")
     
-    sleep 2
-    i=$((i + 1))
+    echo -e "\e[1;36m┌───────────────────────────────────────────────────┐\e[0m"
+    echo -e "\e[1;32m             [ TOOLS REJOIN BY FIZXY ]            \e[0m"
+    echo -e "\e[1;36m├───────────────────────────────────────────────────┤\e[0m"
+    echo -e "\e[1;33m > RAM DEVICE      : $RAM\e[0m"
+    echo -e "\e[1;33m > LAST CLEAN      : $LAST_CC\e[0m"
+    echo -e "\e[1;33m > TIME            : $JAM\e[0m"
+    echo -e "\e[1;36m├───────────────────────────────────────────────────┤\e[0m"
+    echo -e "\e[1;37m   PACKAGE NAME               |       STATUS        \e[0m"
+    echo -e "\e[1;36m├───────────────────────────────────────────────────┤\e[0m"
+    
+    for PKG in $APPS; do
+        if pm list packages | grep -q "$PKG"; then
+            local PID=$(pidof $PKG)
+            if [ -z "$PID" ]; then
+                STATUS="\e[1;31mOFFLINE\e[0m"
+            else
+                STATUS="\e[1;32mONLINE \e[0m"
+            fi
+            printf "   \e[1;37m%-26s\e[0m |       %b\n" "$PKG" "$STATUS"
+        fi
+    done
+    echo -e "\e[1;36m└───────────────────────────────────────────────────┘\e[0m"
+}
+
+cc_auto() {
+    local SKRG=$(date +%s)
+    if [ $SKRG -ge $EXPIRE ]; then
+        echo -e "\e[1;34m[*] Cleaning cache & boosting RAM system...\e[0m"
+        for PKG in $APPS; do
+            [ -d "/data/data/$PKG/cache" ] && rm -rf /data/data/$PKG/cache/* 2>/dev/null
+        done
+        
+        echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+        
+        LAST_CC=$(date +"%H:%M:%S")
+        EXPIRE=$(($SKRG + 1800))
+        sleep 1
+    fi
+}
+
+for PKG in $APPS; do 
+    pm list packages | grep -q "$PKG" && am force-stop $PKG 2>/dev/null
 done
 
-echo "[+] Semua instance Roblox berhasil dibuka!"
+INDEX=0
+while :; do
+    cc_auto
+    
+    INDEX=0
+    for PKG in $APPS; do
+        INDEX=$((INDEX + 1))
+        if pm list packages | grep -q "$PKG"; then
+            PID=$(pidof $PKG)
+
+            if [ -z "$PID" ]; then
+                echo -e "\e[1;31m[!] $PKG dead. Restarting...\e[0m"
+                
+                if [ "$MENU_CHOICE" = "1" ]; then
+                    CURRENT_LINK="https://www.roblox.com/games/start?placeId=$PUBLIC_PLACE_ID"
+                elif [ "$MENU_CHOICE" = "2" ]; then
+                    CURRENT_LINK="$SHARED_LINK"
+                elif [ "$MENU_CHOICE" = "3" ]; then
+                    eval "CURRENT_LINK=\$LINK_ACC_$INDEX"
+                fi
+                
+                mkdir -p /data/data/$PKG/shared_prefs/
+                if [ -f "$CFG/${PKG}_config.xml" ]; then
+                    cp -f "$CFG/${PKG}_config.xml" "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
+                    chmod 444 "/data/data/$PKG/shared_prefs/com.roblox.client.xml"
+                fi
+                
+                monkey -p $PKG -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1
+                
+                sleep 15
+                
+                am start -a android.intent.action.VIEW -d "$CURRENT_LINK" -p $PKG > /dev/null 2>&1
+                
+                sleep 2
+                NPID=$(pidof $PKG)
+                if [ -n "$NPID" ]; then
+                    echo "-1000" > /proc/$NPID/oom_score_adj 2>/dev/null
+                    renice -n 19 -p $NPID > /dev/null 2>&1
+                fi
+                
+                sleep 10
+            fi
+        fi
+    done
+    
+    panel
+    sleep 5
+done
