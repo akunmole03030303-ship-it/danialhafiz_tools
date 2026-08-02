@@ -94,5 +94,15 @@ echo -e "${GREEN}[+] Sisa Masa Aktif : ${DAYS} hari, ${HOURS} jam, ${MINUTES} me
 echo -e "${YELLOW}[+] Memulai program...${NC}"
 sleep 1
 
-# Download script utama (run.sh)
-bash <(curl -s "$RUN_URL")
+# Download dan jalankan script utama (run.sh) dengan aman
+TEMP_RUN=$(mktemp)
+curl -s "$RUN_URL" -o "$TEMP_RUN"
+
+if [ ! -s "$TEMP_RUN" ]; then
+    echo -e "${RED}${BOLD}[!] Gagal mengunduh file run.sh dari GitHub!${NC}"
+    rm -f "$TEMP_RUN"
+    exit 1
+fi
+
+chmod +x "$TEMP_RUN"
+exec sh "$TEMP_RUN" "$MYKEY"
