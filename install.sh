@@ -17,8 +17,8 @@ fi
 # Ambil HWID unik dari perangkat Termux
 HWID=$(uname -n)
 
-# Ganti URL di bawah dengan URL Cloudflare Worker lu yang aktif
-WORKER_URL="https://shrill-waterfall-1428.workers.dev/download?key=${LICENSE_KEY}&hwid=${HWID}"
+# URL Cloudflare Worker yang sudah lengkap dengan subdomain lu
+WORKER_URL="https://shrill-waterfall-1428.daniyalrhafiz.workers.dev/download?key=${LICENSE_KEY}&hwid=${HWID}"
 
 echo ""
 echo "🔄 Menghubungkan ke server lisensi..."
