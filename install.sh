@@ -1,20 +1,46 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-read -p "License Key: " LICENSE
+clear
+echo "=========================================="
+echo "      ROBLOX SECURE INSTALLER v1.0        "
+echo "=========================================="
+echo ""
 
-HWID=$(getprop ro.serialno)
+# Minta input license key dari user
+read -p "🔑 Masukkan License Key lu: " LICENSE_KEY
 
-API="https://shrill-waterfall-1428.daniyalrhafiz.workers.dev"
-
-HASIL=$(curl -s "$API/download?key=$LICENSE&hwid=$HWID")
-
-if echo "$HASIL" | grep -q "Invalid"; then
-    echo "License tidak valid"
-    exit
+if [ -z "$LICENSE_KEY" ]; then
+    echo "❌ Error: License key tidak boleh kosong!"
+    exit 1
 fi
 
-echo "$HASIL" > $PREFIX/bin/roblox_secure
+# Ambil HWID unik dari perangkat Termux
+HWID=$(uname -n)
 
-chmod +x $PREFIX/bin/roblox_secure
+# Ganti URL di bawah dengan URL Cloudflare Worker lu yang aktif
+WORKER_URL="https://shrill-waterfall-1428.workers.dev/download?key=${LICENSE_KEY}&hwid=${HWID}"
 
-roblox_secure
+echo ""
+echo "🔄 Menghubungkan ke server lisensi..."
+
+# Download file dari worker
+curl -s -L "$WORKER_URL" -o main.sh
+
+# Cek apakah hasil download berupa pesan error JSON atau file beneran
+if grep -q "status" main.sh; then
+    echo ""
+    echo "❌ Gagal! Lisensi tidak valid, sudah dipakai device lain, atau sudah mati."
+    echo "Detail Pesan Dari Server:"
+    cat main.sh
+    rm -f main.sh
+    exit 1
+else
+    chmod +x main.sh
+    echo ""
+    echo "✅ Lisensi Berhasil Diverifikasi!"
+    echo "✅ Script berhasil diunduh dan dikunci ke perangkat ini."
+    echo ""
+    echo "🚀 Menjalankan program..."
+    sleep 1
+    ./main.sh
+fi
